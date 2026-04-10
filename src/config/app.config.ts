@@ -1,33 +1,51 @@
-export interface DatabaseConfig {
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  database: string;
-}
+import { Injectable } from '@nestjs/common';
 
-export interface AppConfig {
-  port: number;
-  nodeEnv: string;
-  database: DatabaseConfig;
-  jwt: {
-    secret: string;
-    expiresIn: string;
-  };
-}
+@Injectable()
+export class AppConfigService {
+  private readonly env: NodeJS.ProcessEnv;
 
-export const config = (): AppConfig => ({
-  port: parseInt(process.env['PORT'] || '3000', 10),
-  nodeEnv: process.env['NODE_ENV'] || 'development',
-  database: {
-    host: process.env['DB_HOST'] || 'localhost',
-    port: parseInt(process.env['DB_PORT'] || '5432', 10),
-    username: process.env['DB_USERNAME'] || 'postgres',
-    password: process.env['DB_PASSWORD'] || 'password',
-    database: process.env['DB_NAME'] || 'myfolio',
-  },
-  jwt: {
-    secret: process.env['JWT_SECRET'] || 'your-secret-key',
-    expiresIn: process.env['JWT_EXPIRES_IN'] || '24h',
-  },
-});
+  constructor() {
+    this.env = process.env;
+  }
+
+  get port(): number {
+    return parseInt(this.env['PORT'] || '3000', 10);
+  }
+
+  get nodeEnv(): string {
+    return this.env['NODE_ENV'] || 'development';
+  }
+
+  get isDevelopment(): boolean {
+    return this.nodeEnv === 'development';
+  }
+
+  get isProduction(): boolean {
+    return this.nodeEnv === 'production';
+  }
+
+  get isTest(): boolean {
+    return this.nodeEnv === 'test';
+  }
+
+  get mongodbUri(): string {
+    return this.env['MONGODB_URI'] || 'mongodb://localhost:27017/myfolio';
+  }
+
+  get jwtSecret(): string {
+    return this.env['JWT_SECRET'] || 'your-secret-key';
+  }
+
+  get jwtExpiration(): string {
+    return this.env['JWT_EXPIRATION'] || '7d';
+  }
+
+  get corsOrigins(): string[] {
+    const origins = this.env['CORS_ORIGINS'];
+    return origins ? origins.split(',') : ['http://localhost:3000'];
+  }
+
+  get apiPrefix(): string {
+    return this.env['API_PREFIX'] || '/api';
+  }
+}
