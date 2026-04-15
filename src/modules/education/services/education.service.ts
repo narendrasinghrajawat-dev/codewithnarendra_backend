@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Education, EducationDocument } from './schemas/education.schema';
-import { CreateEducationDto, UpdateEducationDto } from './dto/education.dto';
-import { UnauthorizedException, NotFoundException } from '../../common/exceptions/app.exceptions';
-import { ApiResponse } from '../../common/interfaces/common.interfaces';
+import { Education, EducationDocument } from '../schemas/education.schema';
+import { CreateEducationDto, UpdateEducationDto } from '../dto/education.dto';
+import { UnauthorizedException, NotFoundException } from '../../../common/exceptions/app.exceptions';
+import { ApiResponse } from '../../../common/interfaces/common.interfaces';
 
 @Injectable()
 export class EducationService {

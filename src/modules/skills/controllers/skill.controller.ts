@@ -8,11 +8,11 @@ import {
   Body,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { SkillService } from './skill.service';
-import { CreateSkillDto, UpdateSkillDto } from './dto/skill.dto';
-import { ApiResponse } from '../../common/interfaces/common.interfaces';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { SkillService } from '../services/skill.service';
+import { CreateSkillDto, UpdateSkillDto } from '../dto/skill.dto';
+import { ApiResponse } from '../../../common/interfaces/common.interfaces';
+import { Roles } from '../../../common/decorators/roles.decorator';
 
 @ApiTags('skills')
 @Controller('skills')

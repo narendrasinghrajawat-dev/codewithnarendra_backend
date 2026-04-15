@@ -8,10 +8,10 @@ import {
   Body,
   UseGuards,
 } from '@nestjs/common';
-import { AboutService } from './about.service';
-import { CreateAboutDto, UpdateAboutDto } from './dto/about.dto';
-import { ApiResponse } from '../../common/interfaces/common.interfaces';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { AboutService } from '../services/about.service';
+import { CreateAboutDto, UpdateAboutDto } from '../dto/about.dto';
+import { ApiResponse } from '../../../common/interfaces/common.interfaces';
+import { Roles } from '../../../common/decorators/roles.decorator';
 
 @Controller('about')
 export class AboutController {

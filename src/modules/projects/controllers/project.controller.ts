@@ -9,10 +9,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ProjectService } from './project.service';
-import { CreateProjectDto, UpdateProjectDto, GetProjectsQueryDto } from './dto/project.dto';
-import { ApiResponse } from '../../common/interfaces/common.interfaces';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { ProjectService } from '../services/project.service';
+import { CreateProjectDto, UpdateProjectDto, GetProjectsQueryDto } from '../dto/project.dto';
+import { ApiResponse } from '../../../common/interfaces/common.interfaces';
+import { Roles } from '../../../common/decorators/roles.decorator';
 
 @ApiTags('projects')
 @Controller('projects')

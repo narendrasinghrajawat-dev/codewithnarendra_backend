@@ -8,10 +8,10 @@ import {
   Body,
   UseGuards,
 } from '@nestjs/common';
-import { EducationService } from './education.service';
-import { CreateEducationDto, UpdateEducationDto } from './dto/education.dto';
-import { ApiResponse } from '../../common/interfaces/common.interfaces';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { EducationService } from '../services/education.service';
+import { CreateEducationDto, UpdateEducationDto } from '../dto/education.dto';
+import { ApiResponse } from '../../../common/interfaces/common.interfaces';
+import { Roles } from '../../../common/decorators/roles.decorator';
 
 @Controller('education')
 export class EducationController {

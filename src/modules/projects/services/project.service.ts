@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Project, ProjectDocument } from './schemas/project.schema';
-import { CreateProjectDto, UpdateProjectDto, GetProjectsQueryDto } from './dto/project.dto';
-import { UnauthorizedException, NotFoundException } from '../../common/exceptions/app.exceptions';
-import { ApiResponse } from '../../common/interfaces/common.interfaces';
+import { Project, ProjectDocument } from '../schemas/project.schema';
+import { CreateProjectDto, UpdateProjectDto, GetProjectsQueryDto } from '../dto/project.dto';
+import { UnauthorizedException, NotFoundException } from '../../../common/exceptions/app.exceptions';
+import { ApiResponse } from '../../../common/interfaces/common.interfaces';
 
 @Injectable()
 export class ProjectService {
