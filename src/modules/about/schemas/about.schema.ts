@@ -38,9 +38,6 @@ export class About {
 
   @Prop({ default: Date.now })
   updatedAt: Date;
-
-  @Prop({ required: true })
-  createdBy: string;
 }
 
 export type AboutDocument = About & Document;
