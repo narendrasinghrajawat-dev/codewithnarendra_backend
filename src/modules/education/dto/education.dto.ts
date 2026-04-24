@@ -1,4 +1,4 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsDateString } from 'class-validator';
 
 export class CreateEducationDto {
   @IsString()
@@ -10,11 +10,11 @@ export class CreateEducationDto {
   @IsString()
   field: string;
 
-  @IsString()
+  @IsDateString()
   startDate: string;
 
   @IsOptional()
-  @IsString()
+  @IsDateString()
   endDate?: string;
 
   @IsOptional()
@@ -36,11 +36,11 @@ export class UpdateEducationDto {
   field?: string;
 
   @IsOptional()
-  @IsString()
+  @IsDateString()
   startDate?: string;
 
   @IsOptional()
-  @IsString()
+  @IsDateString()
   endDate?: string;
 
   @IsOptional()

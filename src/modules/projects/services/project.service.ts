@@ -4,7 +4,6 @@ import { Model } from 'mongoose';
 import { Project, ProjectDocument } from '../schemas/project.schema';
 import { CreateProjectDto, UpdateProjectDto, GetProjectsQueryDto } from '../dto/project.dto';
 import { UnauthorizedException, NotFoundException } from '../../../common/exceptions/app.exceptions';
-import { ApiResponse } from '../../../common/interfaces/common.interfaces';
 
 @Injectable()
 export class ProjectService {
@@ -76,8 +75,8 @@ export class ProjectService {
     }
 
     // Check if user is the owner of the project
-    if (Project.createdBy.toString() !== userId) {
-      throw new UnauthorizedException('You can only delete your own Projects');
+    if (project.createdBy.toString() !== userId) {
+      throw new UnauthorizedException('You can only delete your own projects');
     }
 
     await this.projectModel.findByIdAndDelete(id);

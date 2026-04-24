@@ -1,4 +1,4 @@
-# NestJS MyFolio - Clean Modular Folder Structure
+# NestJS CodeWithNarendra - Clean Modular Folder Structure
 
 ## Complete Folder Structure Created ✅
 

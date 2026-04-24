@@ -33,6 +33,9 @@ export class About {
   @Prop({ required: false })
   twitter: string;
 
+  @Prop({ required: true })
+  createdBy: string;
+
   @Prop({ default: Date.now })
   createdAt: Date;
 

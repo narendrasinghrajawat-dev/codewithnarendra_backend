@@ -1,8 +1,8 @@
-import { Prop, Schema } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 @Schema()
-export class EducationSchema {
+export class Education {
   @Prop({ required: true })
   institution: string;
 
@@ -21,6 +21,9 @@ export class EducationSchema {
   @Prop({ required: false })
   description: string;
 
+  @Prop({ required: true })
+  createdBy: string;
+
   @Prop({ default: Date.now })
   createdAt: Date;
 
@@ -28,4 +31,5 @@ export class EducationSchema {
   updatedAt: Date;
 }
 
-export type EducationDocument = EducationSchema & Document;
+export type EducationDocument = Education & Document;
+export const EducationSchema = SchemaFactory.createForClass(Education);

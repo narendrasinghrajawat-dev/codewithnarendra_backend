@@ -1,13 +1,11 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
-import { AppConfigService } from '../../config/app.config';
 
 @Injectable()
 export class DatabaseConnection implements OnModuleInit, OnModuleDestroy {
   constructor(
     @InjectConnection() private readonly connection: Connection,
-    private readonly configService: AppConfigService,
   ) {}
 
   async onModuleInit() {

@@ -8,19 +8,28 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { UserDocument } from '../../../common/schemas/user.schema';
+import { UserDocument } from '../schemas/user.schema';
+import { RefreshTokenDocument } from '../schemas/refresh-token.schema';
 import {
   RegisterDto,
   LoginDto,
   UpdateProfileDto,
+  ResetPasswordDto,
 } from '../dto/auth.dto';
 import { ApiResponse } from '../../../common/dto/response.dto';
+import { EmailService } from './email.service';
+import { ConfigService } from '@nestjs/config';
+import { randomBytes } from 'crypto';
+import { APP_CONSTANT } from '../../../common/constant/app_constant';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel('User') private readonly userModel: Model<UserDocument>,
+    @InjectModel('RefreshToken') private readonly refreshTokenModel: Model<RefreshTokenDocument>,
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -30,17 +39,30 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    const verificationToken = this.generateToken();
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
     const user = new this.userModel({
-      ...registerDto,
+      email: registerDto.email,
       password: hashedPassword,
-      role: 'USER',
+      firstName: registerDto.firstName,
+      lastName: registerDto.lastName,
+      displayName: registerDto.displayName,
+      role: APP_CONSTANT.ROLE.USER,
+      isVerified: false,
+      isActive: true,
+      verificationToken,
+      verificationTokenExpires, 
     });
 
     await user.save();
 
+    // Send verification email (commented out for testing)
+    // await this.emailService.sendVerificationEmail(user.email, verificationToken);
+
     const tokens = await this.generateTokens(user._id.toString(), user.email, user.role);
 
-    return ApiResponse.success('User registered successfully', {
+    return ApiResponse.success('User registered successfully. Please verify your email.', {
       user: this.sanitizeUser(user),
       tokens,
     });
@@ -52,6 +74,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (!user.isActive) {
+      throw new UnauthorizedException('User account is inactive');
+    }
+
     const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
@@ -60,24 +86,51 @@ export class AuthService {
     const tokens = await this.generateTokens(user._id.toString(), user.email, user.role);
 
     return ApiResponse.success('Login successful', {
-      user: this.sanitizeUser(user),
+      ...this.sanitizeUser(user),
       tokens,
     });
   }
 
-  async logout(_userId: string) {
-    // TODO: Implement token invalidation
+  async logout(userId: string) {
+    // Revoke all refresh tokens for this user
+    await this.refreshTokenModel.updateMany(
+      { userId, isRevoked: false },
+      { isRevoked: true },
+    );
+
     return ApiResponse.success('Logout successful');
   }
 
   async refreshTokens(refreshToken: string) {
     try {
       const payload = this.jwtService.verify(refreshToken);
-      const user = await this.userModel.findById(payload.sub);
-      if (!user) {
+      
+      // Check if refresh token exists and is not revoked
+      const storedToken = await this.refreshTokenModel.findOne({
+        token: refreshToken,
+        userId: payload.sub, 
+        isRevoked: false,
+      });
+
+      if (!storedToken) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
+      // Check if token is expired
+      if (storedToken.expiresAt < new Date()) {
+        await this.refreshTokenModel.findByIdAndUpdate(storedToken._id, { isRevoked: true });
+        throw new UnauthorizedException('Refresh token expired');
+      }
+
+      const user = await this.userModel.findById(payload.sub);
+      if (!user || !user.isActive) {
+        throw new UnauthorizedException('User not found or inactive');
+      }
+
+      // Revoke old refresh token
+      await this.refreshTokenModel.findByIdAndUpdate(storedToken._id, { isRevoked: true });
+
+      // Generate new tokens
       const tokens = await this.generateTokens(user._id.toString(), user.email, user.role);
 
       return ApiResponse.success('Tokens refreshed successfully', { tokens });
@@ -92,17 +145,58 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    // TODO: Implement password reset email
+    const resetToken = this.generateToken();
+    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await this.userModel.findByIdAndUpdate(user._id, {
+      resetPasswordToken: resetToken,
+      resetPasswordExpires: resetTokenExpires,
+    });
+
+    await this.emailService.sendPasswordResetEmail(email, resetToken);
+
     return ApiResponse.success('Password reset email sent');
   }
 
-  async resetPassword(_resetPasswordDto: any) {
-    // TODO: Implement password reset with token validation
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const user = await this.userModel.findOne({
+      resetPasswordToken: resetPasswordDto.token,
+      resetPasswordExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const hashedPassword = await bcrypt.hash(resetPasswordDto.password, 10);
+
+    await this.userModel.findByIdAndUpdate(user._id, {
+      password: hashedPassword,
+      resetPasswordToken: undefined,
+      resetPasswordExpires: undefined,
+    });
+
     return ApiResponse.success('Password reset successful');
   }
 
-  async verifyEmail(_token: string) {
-    // TODO: Implement email verification
+  async verifyEmail(token: string) {
+    const user = await this.userModel.findOne({
+      verificationToken: token,
+      verificationTokenExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    await this.userModel.findByIdAndUpdate(user._id, {
+      isVerified: true,
+      verificationToken: undefined,
+      verificationTokenExpires: undefined,
+    });
+
+    await this.emailService.sendWelcomeEmail(user.email, user.firstName);
+
     return ApiResponse.success('Email verified successfully');
   }
 
@@ -150,19 +244,36 @@ export class AuthService {
     const payload = { sub: userId, email, role };
 
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: '1d',
-    });
+      expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '1d',
+    } as any);
 
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '7d',
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d',
+    } as any);
+
+    // Store refresh token in database
+    const refreshTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    await this.refreshTokenModel.create({
+      token: refreshToken,
+      userId,
+      isRevoked: false,
+      expiresAt: refreshTokenExpires,
     });
 
     return { accessToken, refreshToken };
   }
 
+  private generateToken(): string {
+    return randomBytes(32).toString('hex');
+  }
+
   private sanitizeUser(user: UserDocument) {
     const userObj = user.toObject();
     delete userObj.password;
+    delete userObj.verificationToken;
+    delete userObj.verificationTokenExpires;
+    delete userObj.resetPasswordToken;
+    delete userObj.resetPasswordExpires;
     return userObj;
   }
 }

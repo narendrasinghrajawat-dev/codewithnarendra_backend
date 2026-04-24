@@ -1,4 +1,4 @@
-# MyFolio NestJS Microservices Architecture
+# CodeWithNarendra NestJS Microservices Architecture
 
 ## Microservices Structure
 

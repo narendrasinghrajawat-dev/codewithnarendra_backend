@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AppConfigService } from './config/app.config';
 
@@ -9,14 +9,11 @@ async function bootstrap() {
   
   // Enable CORS
   app.enableCors({
-    origin: new AppConfigService().corsOrigins(),
+    origin: new AppConfigService().corsOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-
-  // Global prefix for all routes
-  app.setGlobalPrefix(new AppConfigService().apiPrefix());
 
   // Global validation pipe
   app.useGlobalPipes(new ValidationPipe({
@@ -27,22 +24,29 @@ async function bootstrap() {
     },
   }));
 
-  // API documentation
-  SwaggerModule.setupDocumentBuilder(app)
-    .setTitle('MyFolio API')
+  // API documentation (setup before global prefix to make it accessible at root)
+  const config = new DocumentBuilder()
+    .setTitle('CodeWithNarendra API')
     .setDescription('Portfolio management API')
     .setVersion('1.0')
+    .addServer('http://localhost:3000/api', 'Development Server')
     .addTag('auth')
     .addTag('projects')
     .addTag('skills')
     .addTag('education')
     .addTag('about')
     .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api-docs', app, document);
 
-  const port = new AppConfigService().port();
+  // Global prefix for all routes
+  app.setGlobalPrefix(new AppConfigService().apiPrefix);
+
+  const port = new AppConfigService().port;
   await app.listen(port);
   
-  console.log(`🚀 Application is running on: http://localhost:${port}${new AppConfigService().apiPrefix()}`);
-}
+  console.log(`🚀 Application is running on: http://localhost:${port}${new AppConfigService().apiPrefix}`);
+} 
 
-bootstrap();
+bootstrap(); 
+       

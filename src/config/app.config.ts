@@ -29,7 +29,7 @@ export class AppConfigService {
   }
 
   get mongodbUri(): string {
-    return this.env['MONGODB_URI'] || 'mongodb://localhost:27017/myfolio';
+    return this.env['MONGODB_URI'] || 'mongodb://localhost:27017/codewithnarendra';
   }
 
   get jwtSecret(): string {

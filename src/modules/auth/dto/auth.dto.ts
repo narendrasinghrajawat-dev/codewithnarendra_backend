@@ -30,7 +30,7 @@ export class RegisterDto {
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
     message: 'Password must contain uppercase, lowercase, and number',
   })
-  password: string;
+  password: string; 
 
   @IsString()
   @MinLength(2, { message: 'First name must be at least 2 characters' })

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, IsEnum, IsUrl } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsUrl } from 'class-validator';
 
 export class CreateProjectDto {
   @IsString()
@@ -22,11 +22,10 @@ export class CreateProjectDto {
   repositoryUrl: string;
 
   @IsOptional()
-  @IsString()
-  isFeatured: boolean;
+  isFeatured?: boolean;
 
   @IsOptional()
-  sortOrder: number;
+  sortOrder?: number;
 }
 
 export class UpdateProjectDto {

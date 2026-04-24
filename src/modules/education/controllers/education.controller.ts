@@ -8,17 +8,26 @@ import {
   Body,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { EducationService } from '../services/education.service';
 import { CreateEducationDto, UpdateEducationDto } from '../dto/education.dto';
-import { ApiResponse } from '../../../common/interfaces/common.interfaces';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
+import { APP_CONSTANT } from '../../../common/constant/app_constant';
+import { User } from '../../../common/decorators/user.decorator';
 
+@ApiTags('education')
+@ApiBearerAuth()
 @Controller('education')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class EducationController {
   constructor(private readonly educationService: EducationService) {}
 
   @Get()
-  @Roles('USER', 'ADMIN')
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
+  @ApiOperation({ summary: 'Get all education entries' })
+  @ApiResponse({ status: 200, description: 'Education entries retrieved successfully' })
   async getAllEducation() {
     const education = await this.educationService.getAllEducation();
     
@@ -30,7 +39,10 @@ export class EducationController {
   }
 
   @Get(':id')
-  @Roles('USER', 'ADMIN')
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
+  @ApiOperation({ summary: 'Get education by ID' })
+  @ApiResponse({ status: 200, description: 'Education retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Education not found' })
   async getEducationById(@Param('id') id: string) {
     const education = await this.educationService.getEducationById(id);
     
@@ -42,8 +54,11 @@ export class EducationController {
   }
 
   @Post()
-  @Roles('USER', 'ADMIN')
-  async createEducation(@Body() createEducationDto: CreateEducationDto, @Body() userId: string) {
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
+  @ApiOperation({ summary: 'Create new education entry' })
+  @ApiResponse({ status: 201, description: 'Education created successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  async createEducation(@Body() createEducationDto: CreateEducationDto, @User('id') userId: string) {
     const education = await this.educationService.createEducation(createEducationDto, userId);
     
     return {
@@ -54,11 +69,15 @@ export class EducationController {
   }
 
   @Put(':id')
-  @Roles('USER', 'ADMIN')
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
+  @ApiOperation({ summary: 'Update education entry' })
+  @ApiResponse({ status: 200, description: 'Education updated successfully' })
+  @ApiResponse({ status: 404, description: 'Education not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not the owner' })
   async updateEducation(
     @Param('id') id: string,
     @Body() updateEducationDto: UpdateEducationDto,
-    @Body() userId: string,
+    @User('id') userId: string,
   ) {
     const education = await this.educationService.updateEducation(id, updateEducationDto, userId);
     
@@ -70,8 +89,12 @@ export class EducationController {
   }
 
   @Delete(':id')
-  @Roles('USER', 'ADMIN')
-  async deleteEducation(@Param('id') id: string, @Body() userId: string) {
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
+  @ApiOperation({ summary: 'Delete education entry' })
+  @ApiResponse({ status: 200, description: 'Education deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Education not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not the owner' })
+  async deleteEducation(@Param('id') id: string, @User('id') userId: string) {
     await this.educationService.deleteEducation(id, userId);
     
     return {
@@ -80,3 +103,4 @@ export class EducationController {
     };
   }
 }
+ 

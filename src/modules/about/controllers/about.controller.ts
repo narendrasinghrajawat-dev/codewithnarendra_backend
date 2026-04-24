@@ -8,17 +8,26 @@ import {
   Body,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AboutService } from '../services/about.service';
 import { CreateAboutDto, UpdateAboutDto } from '../dto/about.dto';
-import { ApiResponse } from '../../../common/interfaces/common.interfaces';
+import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
+import { APP_CONSTANT } from '../../../common/constant/app_constant';
+import { User } from '../../../common/decorators/user.decorator';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 
+@ApiTags('about')
+@ApiBearerAuth()
 @Controller('about')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AboutController {
   constructor(private readonly aboutService: AboutService) {}
 
   @Get()
-  @Roles('USER', 'ADMIN')
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
+  @ApiOperation({ summary: 'Get all about sections' })
+  @ApiResponse({ status: 200, description: 'About sections retrieved successfully' })
   async getAbout() {
     const about = await this.aboutService.getAbout();
     
@@ -30,7 +39,10 @@ export class AboutController {
   }
 
   @Get(':id')
-  @Roles('USER', 'ADMIN')
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
+  @ApiOperation({ summary: 'Get about section by ID' })
+  @ApiResponse({ status: 200, description: 'About section retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'About section not found' })
   async getAboutById(@Param('id') id: string) {
     const about = await this.aboutService.getAboutById(id);
     
@@ -42,8 +54,11 @@ export class AboutController {
   }
 
   @Post()
-  @Roles('USER', 'ADMIN')
-  async createAbout(@Body() createAboutDto: CreateAboutDto, @Body() userId: string) {
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
+  @ApiOperation({ summary: 'Create a new about section' })
+  @ApiResponse({ status: 201, description: 'About section created successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  async createAbout(@Body() createAboutDto: CreateAboutDto, @User('id') userId: string) {
     const about = await this.aboutService.createAbout(createAboutDto, userId);
     
     return {
@@ -54,11 +69,15 @@ export class AboutController {
   }
 
   @Put(':id')
-  @Roles('USER', 'ADMIN')
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
+  @ApiOperation({ summary: 'Update about section' })
+  @ApiResponse({ status: 200, description: 'About section updated successfully' })
+  @ApiResponse({ status: 404, description: 'About section not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not the owner' })
   async updateAbout(
     @Param('id') id: string,
     @Body() updateAboutDto: UpdateAboutDto,
-    @Body() userId: string,
+    @User('id') userId: string,
   ) {
     const about = await this.aboutService.updateAbout(id, updateAboutDto, userId);
     
@@ -70,8 +89,12 @@ export class AboutController {
   }
 
   @Delete(':id')
-  @Roles('USER', 'ADMIN')
-  async deleteAbout(@Param('id') id: string, @Body() userId: string) {
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
+  @ApiOperation({ summary: 'Delete about section' })
+  @ApiResponse({ status: 200, description: 'About section deleted successfully' })
+  @ApiResponse({ status: 404, description: 'About section not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not the owner' })
+  async deleteAbout(@Param('id') id: string, @User('id') userId: string) {
     await this.aboutService.deleteAbout(id, userId);
     
     return {

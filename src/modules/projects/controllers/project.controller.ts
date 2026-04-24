@@ -1,27 +1,34 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Put, 
-  Delete, 
-  Param, 
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ProjectService } from '../services/project.service';
 import { CreateProjectDto, UpdateProjectDto, GetProjectsQueryDto } from '../dto/project.dto';
-import { ApiResponse } from '../../../common/interfaces/common.interfaces';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
+import { APP_CONSTANT } from '../../../common/constant/app_constant';
+import { User } from '../../../common/decorators/user.decorator';
 
 @ApiTags('projects')
+@ApiBearerAuth()
 @Controller('projects')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   @Get()
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
   @ApiOperation({ summary: 'Get all projects' })
-  @Roles('USER', 'ADMIN')
+  @ApiResponse({ status: 200, description: 'Projects retrieved successfully' })
   async getProjects(@Query() query: GetProjectsQueryDto) {
     const result = await this.projectService.getAllProjects(query);
     
@@ -42,6 +49,7 @@ export class ProjectController {
 
   @Get('featured')
   @ApiOperation({ summary: 'Get featured projects' })
+  @ApiResponse({ status: 200, description: 'Featured projects retrieved successfully' })
   async getFeaturedProjects() {
     const projects = await this.projectService.getFeaturedProjects();
     
@@ -54,6 +62,7 @@ export class ProjectController {
 
   @Get('search')
   @ApiOperation({ summary: 'Search projects' })
+  @ApiResponse({ status: 200, description: 'Search results retrieved successfully' })
   async searchProjects(@Query('q') searchTerm: string) {
     const projects = await this.projectService.searchProjects(searchTerm);
     
@@ -65,7 +74,10 @@ export class ProjectController {
   }
 
   @Get(':id')
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
   @ApiOperation({ summary: 'Get project by ID' })
+  @ApiResponse({ status: 200, description: 'Project retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Project not found' })
   async getProjectById(@Param('id') id: string) {
     const project = await this.projectService.getProjectById(id);
     
@@ -77,9 +89,11 @@ export class ProjectController {
   }
 
   @Post()
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
   @ApiOperation({ summary: 'Create new project' })
-  @Roles('USER', 'ADMIN')
-  async createProject(@Body() createProjectDto: CreateProjectDto, @Body() userId: string) {
+  @ApiResponse({ status: 201, description: 'Project created successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  async createProject(@Body() createProjectDto: CreateProjectDto, @User('id') userId: string) {
     const project = await this.projectService.createProject(createProjectDto, userId);
     
     return {
@@ -90,12 +104,15 @@ export class ProjectController {
   }
 
   @Put(':id')
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
   @ApiOperation({ summary: 'Update project' })
-  @Roles('USER', 'ADMIN')
+  @ApiResponse({ status: 200, description: 'Project updated successfully' })
+  @ApiResponse({ status: 404, description: 'Project not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not the owner' })
   async updateProject(
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
-    @Body() userId: string,
+    @User('id') userId: string,
   ) {
     const project = await this.projectService.updateProject(id, updateProjectDto, userId);
     
@@ -107,9 +124,12 @@ export class ProjectController {
   }
 
   @Delete(':id')
+  @Roles(APP_CONSTANT.ROLE.USER, APP_CONSTANT.ROLE.ADMIN)
   @ApiOperation({ summary: 'Delete project' })
-  @Roles('USER', 'ADMIN')
-  async deleteProject(@Param('id') id: string, @Body() userId: string) {
+  @ApiResponse({ status: 200, description: 'Project deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Project not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not the owner' })
+  async deleteProject(@Param('id') id: string, @User('id') userId: string) {
     await this.projectService.deleteProject(id, userId);
     
     return {

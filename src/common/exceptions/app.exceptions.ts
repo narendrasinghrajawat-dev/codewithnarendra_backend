@@ -1,6 +1,6 @@
 export class AppException extends Error {
   public readonly statusCode: number;
-  public readonly message: string;
+  public override readonly message: string;
 
   constructor(message: string, statusCode: number) {
     super(message);

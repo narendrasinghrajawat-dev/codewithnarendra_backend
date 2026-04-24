@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { AboutSchema, AboutDocument } from './schemas/about.schema';
-import { CreateAboutDto, UpdateAboutDto } from './dto/about.dto';
-import { UnauthorizedException, NotFoundException } from '../../common/exceptions/app.exceptions';
-import { ApiResponse } from '../../common/interfaces/common.interfaces';
+import { About, AboutDocument } from '../schemas/about.schema';
+import { CreateAboutDto, UpdateAboutDto } from '../dto/about.dto';
+import { UnauthorizedException, NotFoundException } from '../../../common/exceptions/app.exceptions';
 
 @Injectable()
 export class AboutService {

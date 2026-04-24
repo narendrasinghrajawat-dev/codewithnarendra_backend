@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Skill, SkillDocument } from './schemas/skill.schema';
-import { CreateSkillDto, UpdateSkillDto } from './dto/skill.dto';
-import { UnauthorizedException, NotFoundException } from '../../common/exceptions/app.exceptions';
-import { ApiResponse } from '../../common/interfaces/common.interfaces';
+import { Skill, SkillDocument } from '../schemas/skill.schema';
+import { CreateSkillDto, UpdateSkillDto } from '../dto/skill.dto';
+import { UnauthorizedException, NotFoundException } from '../../../common/exceptions/app.exceptions';
 
 @Injectable()
 export class SkillService {

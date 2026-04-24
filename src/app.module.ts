@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -13,9 +14,27 @@ import { AboutModule } from './modules/about/about.module';
 
 @Module({
   imports: [
-    // MongoDB connection
-    MongooseModule.forRoot({
-      uri: new AppConfigService().mongodbUri(),
+    // Configuration module
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: process.env['NODE_ENV'] === 'production' 
+        ? '.env.prod' 
+        : process.env['NODE_ENV'] === 'test' 
+          ? '.env.test' 
+          : '.env.dev',
+    }),
+    
+    // MongoDB connection 
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
+        const uri = configService.get<string>('MONGODB_URI');
+        if (!uri) {
+          throw new Error('MONGODB_URI is not defined');
+        }
+        return { uri };
+      },
+      inject: [ConfigService],
     }),
     
     // Feature modules
